@@ -1,0 +1,21 @@
+dn: ou=IT,dc=lab,dc=deneme
+objectClass: organizationalUnit
+ou: IT
+
+dn: cn=ahmet.yilmaz,ou=IT,dc=lab,dc=deneme
+objectClass: inetOrgPerson
+cn: ahmet.yilmaz
+sn: Yilmaz
+uid: ahmet.yilmaz
+userPassword: CHANGEME_ahmet_yilmaz
+
+dn: ou=DEV,dc=lab,dc=deneme
+objectClass: organizationalUnit
+ou: DEV
+
+dn: cn=mehmet.gür,ou=DEV,dc=lab,dc=deneme
+objectClass: inetOrgPerson
+cn: mehmet.gür
+sn: Gür
+uid: mehmet.gur
+userPassword: CHANGEME_mehmet_gur
