@@ -23,7 +23,7 @@
   <h3>Giriş Bilgileri</h3>
   <input type="text" id="username" placeholder="Kullanıcı adı (örn: admin)">
   <input type="password" id="password" placeholder="Şifre">
-  <button onclick="loadUsers()">Bağlan ve Listele</button>
+  <button onclick="login()">Bağlan ve Listele</button>
   <p id="loginStatus"></p>
 </div>
 
@@ -46,14 +46,49 @@
 </table>
 
 <script>
+let accessToken = null;
+
 function getAuthHeader() {
+  return "Bearer " + accessToken;
+}
+
+async function login() {
+  const status = document.getElementById('loginStatus');
   const user = document.getElementById('username').value;
   const pass = document.getElementById('password').value;
-  return "Basic " + btoa(user + ":" + pass);
+  status.textContent = "Giriş yapılıyor...";
+  status.className = "";
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      accessToken = null;
+      status.textContent = "Hata: " + (data.detail || response.status);
+      status.className = "error";
+      return;
+    }
+    accessToken = data.access_token;
+    status.textContent = "Giriş başarılı.";
+    status.className = "success";
+    await loadUsers();
+  } catch (e) {
+    accessToken = null;
+    status.textContent = "Bağlantı hatası: " + e;
+    status.className = "error";
+  }
 }
 
 async function loadUsers() {
   const status = document.getElementById('loginStatus');
+  if (!accessToken) {
+    status.textContent = "Önce giriş yapmalısın.";
+    status.className = "error";
+    return;
+  }
   status.textContent = "Yükleniyor...";
   status.className = "";
   try {

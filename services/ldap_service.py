@@ -1,5 +1,6 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import os
+
+from fastapi import HTTPException
 from ldap3 import Server, Connection, ALL, MODIFY_REPLACE
 from ldap3.core.exceptions import LDAPBindError
 from ldap3.utils.dn import parse_dn
@@ -7,10 +8,10 @@ from ldap3.utils.conv import escape_filter_chars
 
 from models.schemas import NewUser, UpdateUser
 
-security = HTTPBasic()
-
-LDAP_SERVER = "localhost"
+LDAP_SERVER = os.environ.get("LDAP_SERVER", "localhost")
 LDAP_BASE_DN = "dc=lab,dc=deneme"
+LDAP_ADMIN_DN = f"cn=admin,{LDAP_BASE_DN}"
+LDAP_ADMIN_PASSWORD = os.environ.get("LDAP_ADMIN_PASSWORD", "admin")
 
 _DN_ESCAPE_MAP = {
     "\\": "\\\\",
@@ -33,15 +34,15 @@ def escape_dn_value(value: str) -> str:
     return escaped
 
 
-def get_ldap_connection(credentials: HTTPBasicCredentials = Depends(security)):
+def resolve_bind_dn(username: str) -> str:
+    """Look up a user's actual DN by uid, falling back to a guessed cn=... DN."""
     server = Server(LDAP_SERVER, get_info=ALL)
-
-    bind_dn = f"cn={escape_dn_value(credentials.username)},{LDAP_BASE_DN}"
+    bind_dn = f"cn={escape_dn_value(username)},{LDAP_BASE_DN}"
     try:
         anon_conn = Connection(server, auto_bind=True)
         anon_conn.search(
             LDAP_BASE_DN,
-            f"(uid={escape_filter_chars(credentials.username)})",
+            f"(uid={escape_filter_chars(username)})",
             attributes=[],
         )
         if anon_conn.entries:
@@ -49,22 +50,24 @@ def get_ldap_connection(credentials: HTTPBasicCredentials = Depends(security)):
         anon_conn.unbind()
     except LDAPBindError:
         pass
+    return bind_dn
 
+
+def bind_as(bind_dn: str, password: str) -> Connection:
+    server = Server(LDAP_SERVER, get_info=ALL)
     try:
-        conn = Connection(server, bind_dn, credentials.password, auto_bind=True)
+        return Connection(server, bind_dn, password, auto_bind=True)
     except LDAPBindError:
         raise HTTPException(status_code=401, detail="Invalid LDAP credentials")
 
-    conn.app_bind_dn = bind_dn
-    return conn
+
+def get_anonymous_connection() -> Connection:
+    server = Server(LDAP_SERVER, get_info=ALL)
+    return Connection(server, auto_bind=True)
 
 
-def require_admin(conn: Connection = Depends(get_ldap_connection)):
-    admin_dn = f"cn=admin,{LDAP_BASE_DN}"
-    if conn.app_bind_dn.lower() != admin_dn.lower():
-        conn.unbind()
-        raise HTTPException(status_code=403, detail="Only admin can perform this action")
-    return conn
+def get_admin_connection() -> Connection:
+    return bind_as(LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
 
 
 def list_users(conn: Connection) -> list[dict]:
