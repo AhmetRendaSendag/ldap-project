@@ -36,18 +36,17 @@ def escape_dn_value(value: str) -> str:
 
 def resolve_bind_dn(username: str) -> str:
     """Look up a user's actual DN by uid, falling back to a guessed cn=... DN."""
-    server = Server(LDAP_SERVER, get_info=ALL)
     bind_dn = f"cn={escape_dn_value(username)},{LDAP_BASE_DN}"
     try:
-        anon_conn = Connection(server, auto_bind=True)
-        anon_conn.search(
+        admin_conn = get_admin_connection()
+        admin_conn.search(
             LDAP_BASE_DN,
             f"(uid={escape_filter_chars(username)})",
             attributes=[],
         )
-        if anon_conn.entries:
-            bind_dn = str(anon_conn.entries[0].entry_dn)
-        anon_conn.unbind()
+        if admin_conn.entries:
+            bind_dn = str(admin_conn.entries[0].entry_dn)
+        admin_conn.unbind()
     except LDAPBindError:
         pass
     return bind_dn
@@ -59,11 +58,6 @@ def bind_as(bind_dn: str, password: str) -> Connection:
         return Connection(server, bind_dn, password, auto_bind=True)
     except LDAPBindError:
         raise HTTPException(status_code=401, detail="Invalid LDAP credentials")
-
-
-def get_anonymous_connection() -> Connection:
-    server = Server(LDAP_SERVER, get_info=ALL)
-    return Connection(server, auto_bind=True)
 
 
 def get_admin_connection() -> Connection:

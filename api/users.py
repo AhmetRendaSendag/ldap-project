@@ -15,7 +15,7 @@ def login(credentials: LoginRequest):
 
 @router.get("/users")
 def list_users(token: dict = Depends(auth_service.get_current_token)):
-    conn = ldap_service.get_anonymous_connection()
+    conn = ldap_service.get_admin_connection()
     return {"users": ldap_service.list_users(conn)}
 
 

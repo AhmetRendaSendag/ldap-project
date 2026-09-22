@@ -7,7 +7,7 @@ objectClass: inetOrgPerson
 cn: ahmet.yilmaz
 sn: Yilmaz
 uid: ahmet.yilmaz
-userPassword: CHANGEME_ahmet_yilmaz
+userPassword: a123
 
 dn: ou=DEV,dc=lab,dc=deneme
 objectClass: organizationalUnit
@@ -18,4 +18,4 @@ objectClass: inetOrgPerson
 cn: mehmet.gür
 sn: Gür
 uid: mehmet.gur
-userPassword: CHANGEME_mehmet_gur
+userPassword: m123
