@@ -34,3 +34,13 @@ export function updateUser(token, uid, updates) {
 export function deleteUser(token, uid) {
   return request('/users/' + uid, { method: 'DELETE', token })
 }
+
+export function decodeToken(token) {
+  const payload = token.split('.')[1]
+  return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+}
+
+export function cnFromDn(dn) {
+  const match = /^cn=([^,]+)/.exec(dn)
+  return match ? match[1] : dn
+}

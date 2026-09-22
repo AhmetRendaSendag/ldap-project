@@ -3,7 +3,7 @@ import AddUserForm from '../components/AddUserForm.jsx'
 import UserTable from '../components/UserTable.jsx'
 import * as api from '../api.js'
 
-export default function UsersPage({ accessToken, onLogout }) {
+export default function UsersPage({ accessToken, currentUser, onLogout }) {
   const [users, setUsers] = useState([])
   const [listStatus, setListStatus] = useState('')
   const [listStatusClass, setListStatusClass] = useState('')
@@ -66,7 +66,15 @@ export default function UsersPage({ accessToken, onLogout }) {
     <>
       <div className="topbar">
         <h1>LDAP Kullanıcı Yönetimi</h1>
-        <button onClick={onLogout}>Çıkış Yap</button>
+        <div className="user-info">
+          {currentUser && (
+            <span>
+              Hoş geldin, {currentUser.name}
+              {currentUser.isAdmin && <span className="admin-badge">Admin</span>}
+            </span>
+          )}
+          <button onClick={onLogout}>Çıkış Yap</button>
+        </div>
       </div>
       <p className={listStatusClass}>{listStatus}</p>
       <AddUserForm onAdd={handleAdd} status={addStatus} statusClass={addStatusClass} />
