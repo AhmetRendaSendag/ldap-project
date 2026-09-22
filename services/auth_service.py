@@ -14,17 +14,26 @@ JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret-change-me-please-its-not-l
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "30"))
 
+ADMIN_OU = "Admins"
+
 _bearer_scheme = HTTPBearer()
 
 
 def authenticate(username: str, password: str) -> dict:
-    """Verify credentials via an LDAP bind and return the resulting identity."""
+    """Verify credentials via an LDAP bind and return the resulting identity.
+
+    Admin status is determined by directory placement: a user is an admin if
+    their entry lives under the Admins OU, the same way any other user's OU
+    marks their department. This lets multiple ordinary directory users be
+    admins, promoted/demoted the same way any user is moved between OUs.
+    """
     bind_dn = ldap_service.resolve_bind_dn(username)
     conn = ldap_service.bind_as(bind_dn, password)
     conn.unbind()
+    user_ou = ldap_service.get_ou(bind_dn)
     return {
         "bind_dn": bind_dn,
-        "is_admin": bind_dn.lower() == ldap_service.LDAP_ADMIN_DN.lower(),
+        "is_admin": (user_ou or "").lower() == ADMIN_OU.lower(),
     }
 
 

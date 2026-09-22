@@ -19,3 +19,14 @@ cn: mehmet.gür
 sn: Gür
 uid: mehmet.gur
 userPassword: m123
+
+dn: ou=Admins,dc=lab,dc=deneme
+objectClass: organizationalUnit
+ou: Admins
+
+dn: cn=admin,ou=Admins,dc=lab,dc=deneme
+objectClass: inetOrgPerson
+cn: admin
+sn: Admin
+uid: admin
+userPassword: adm123

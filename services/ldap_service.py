@@ -64,21 +64,22 @@ def get_admin_connection() -> Connection:
     return bind_as(LDAP_ADMIN_DN, LDAP_ADMIN_PASSWORD)
 
 
+def get_ou(dn: str) -> str | None:
+    for attribute, value, separator in parse_dn(dn):
+        if attribute.lower() == "ou":
+            return value
+    return None
+
+
 def list_users(conn: Connection) -> list[dict]:
     conn.search(LDAP_BASE_DN, "(objectClass=inetOrgPerson)", attributes=["cn", "sn", "uid"])
     results = []
     for entry in conn.entries:
-        dn_components = parse_dn(str(entry.entry_dn))
-        ou_value = None
-        for attribute, value, separator in dn_components:
-            if attribute.lower() == "ou":
-                ou_value = value
-                break
         results.append({
             "cn": str(entry.cn),
             "sn": str(entry.sn),
             "uid": str(entry.uid),
-            "ou": ou_value
+            "ou": get_ou(str(entry.entry_dn))
         })
     conn.unbind()
     return results
