@@ -8,6 +8,12 @@ h1 {
   color: #333;
 }
 
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
