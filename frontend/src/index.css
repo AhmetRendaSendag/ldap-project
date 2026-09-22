@@ -1,0 +1,47 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 40px;
+  background: #f4f4f4;
+}
+
+h1 {
+  color: #333;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background: #333;
+  color: white;
+}
+
+input, button {
+  padding: 8px;
+  margin: 4px 0;
+}
+
+.box {
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+}
+
+.error {
+  color: red;
+}
+
+.success {
+  color: green;
+}

@@ -8,12 +8,6 @@ app = FastAPI()
 
 app.add_middleware(RequestLoggingMiddleware)
 
-
-@app.get("/")
-def read_root():
-    return {"message": "LDAP API IS RUNNING"}
-
-
 app.include_router(users_router)
 
-app.mount("/gui", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory="static", html=True), name="static")

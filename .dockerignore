@@ -5,3 +5,5 @@ __pycache__
 .git
 .gitignore
 base.ldif.local
+frontend/node_modules
+frontend/dist
