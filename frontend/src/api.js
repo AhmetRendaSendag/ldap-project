@@ -19,8 +19,28 @@ export function login(username, password) {
   return request('/login', { method: 'POST', body: { username, password } })
 }
 
-export function listUsers(token) {
-  return request('/users', { token })
+export function listUsers(token, search, field) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (search && field) params.set('field', field)
+  const query = params.toString()
+  return request('/users' + (query ? '?' + query : ''), { token })
+}
+
+export function getUser(token, uid) {
+  return request('/users/' + encodeURIComponent(uid), { token })
+}
+
+export function getLastLogin(token, uid) {
+  return request('/users/' + encodeURIComponent(uid) + '/last-login', { token })
+}
+
+export function getProfile(token, uid) {
+  return request('/users/' + encodeURIComponent(uid) + '/profile', { token })
+}
+
+export function updateProfile(token, uid, profile) {
+  return request('/users/' + encodeURIComponent(uid) + '/profile', { method: 'PUT', token, body: profile })
 }
 
 export function createUser(token, user) {
@@ -28,11 +48,56 @@ export function createUser(token, user) {
 }
 
 export function updateUser(token, uid, updates) {
-  return request('/users/' + uid, { method: 'PUT', token, body: updates })
+  return request('/users/' + encodeURIComponent(uid), { method: 'PUT', token, body: updates })
 }
 
 export function deleteUser(token, uid) {
-  return request('/users/' + uid, { method: 'DELETE', token })
+  return request('/users/' + encodeURIComponent(uid), { method: 'DELETE', token })
+}
+
+export async function getAvatarUrl(token, uid) {
+  const response = await fetch('/users/' + encodeURIComponent(uid) + '/avatar', {
+    headers: { Authorization: 'Bearer ' + token },
+  })
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(String(response.status))
+  return URL.createObjectURL(await response.blob())
+}
+
+export async function getQrUrl(token, uid) {
+  const response = await fetch('/users/' + encodeURIComponent(uid) + '/qr', {
+    headers: { Authorization: 'Bearer ' + token },
+  })
+  if (!response.ok) throw new Error(String(response.status))
+  return {
+    url: URL.createObjectURL(await response.blob()),
+    target: response.headers.get('X-QR-Target'),
+  }
+}
+
+export function getTunnel(token) {
+  return request('/tunnel', { token })
+}
+
+export function startTunnel(token) {
+  return request('/tunnel/start', { method: 'POST', token })
+}
+
+export function stopTunnel(token) {
+  return request('/tunnel/stop', { method: 'POST', token })
+}
+
+export async function uploadAvatar(token, uid, file) {
+  const response = await fetch('/users/' + encodeURIComponent(uid) + '/avatar', {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': file.type },
+    body: file,
+  })
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.detail || String(response.status))
+  }
+  return data
 }
 
 export function decodeToken(token) {
@@ -40,7 +105,24 @@ export function decodeToken(token) {
   return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
 }
 
-export function cnFromDn(dn) {
-  const match = /^cn=([^,]+)/.exec(dn)
+export function isSameUser(uid, user) {
+  if (!uid || !user?.uid) return false
+  return uid.toLowerCase() === user.uid.toLowerCase()
+}
+
+export function nameFromDn(dn) {
+  const match = /^(?:uid|cn)=([^,]+)/.exec(dn)
   return match ? match[1] : dn
+}
+export function getLogs(token, filters = {}) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value)
+  }
+  const query = params.toString()
+  return request('/Print_Log' + (query ? '?' + query : ''), { token })
+}
+
+export function sendChat(token, message) {
+  return request('/chat', { method: 'POST', token, body: { message } })
 }

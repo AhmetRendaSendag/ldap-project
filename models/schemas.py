@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel
 
 
@@ -17,3 +19,13 @@ class NewUser(BaseModel):
 class UpdateUser(BaseModel):
     sn: str | None = None
     ou: str | None = None
+
+
+class UserProfile(BaseModel):
+    birth_date: date | None = None
+    height_cm: int | None = None
+    weight_kg: int | None = None
+
+
+class ChatRequest(BaseModel):
+    message: str

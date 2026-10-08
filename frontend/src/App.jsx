@@ -1,10 +1,23 @@
-import { useMemo, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LoginPage from './pages/LoginPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
-import { cnFromDn, decodeToken } from './api.js'
+import { nameFromDn, decodeToken } from './api.js'
+import LogsPage from './pages/LogsPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
+import ChatPage from './pages/ChatPage.jsx'
 
 const TOKEN_KEY = 'accessToken'
+
+function RedirectToLogin() {
+  const location = useLocation()
+  return <Navigate to="/login" replace state={{ from: location.pathname }} />
+}
+
+function RedirectAfterLogin() {
+  const location = useLocation()
+  return <Navigate to={location.state?.from || '/'} replace />
+}
 
 export default function App() {
   const [accessToken, setAccessToken] = useState(() => localStorage.getItem(TOKEN_KEY))
@@ -13,10 +26,23 @@ export default function App() {
     if (!accessToken) return null
     try {
       const payload = decodeToken(accessToken)
-      return { name: cnFromDn(payload.sub), isAdmin: !!payload.is_admin }
+      return { dn: payload.sub, uid: payload.uid, name: nameFromDn(payload.sub), isAdmin: !!payload.is_admin }
     } catch {
       return null
     }
+  }, [accessToken])
+
+  useEffect(() => {
+    if (!accessToken) return
+    let expiresAt
+    try {
+      expiresAt = decodeToken(accessToken).exp * 1000
+    } catch {
+      handleLogout()
+      return
+    }
+    const timer = setTimeout(handleLogout, Math.max(0, expiresAt - Date.now()))
+    return () => clearTimeout(timer)
   }, [accessToken])
 
   function handleAuthenticated(token) {
@@ -34,7 +60,7 @@ export default function App() {
       <Routes>
         <Route
           path="/login"
-          element={accessToken ? <Navigate to="/" replace /> : <LoginPage onAuthenticated={handleAuthenticated} />}
+          element={accessToken ? <RedirectAfterLogin /> : <LoginPage onAuthenticated={handleAuthenticated} />}
         />
         <Route
           path="/"
@@ -42,7 +68,41 @@ export default function App() {
             accessToken ? (
               <UsersPage accessToken={accessToken} currentUser={currentUser} onLogout={handleLogout} />
             ) : (
-              <Navigate to="/login" replace />
+              <RedirectToLogin />
+            )
+          }
+        />
+        <Route
+          path="/logs"
+          element={
+            !accessToken ? (
+              <RedirectToLogin />
+            ) : currentUser?.isAdmin ? (
+              <LogsPage accessToken={accessToken} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            !accessToken ? (
+              <RedirectToLogin />
+            ) : currentUser?.isAdmin ? (
+              <ChatPage accessToken={accessToken} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/profile/:uid"
+          element={
+            accessToken ? (
+              <ProfilePage accessToken={accessToken} currentUser={currentUser} onLogout={handleLogout} />
+            ) : (
+              <RedirectToLogin />
             )
           }
         />

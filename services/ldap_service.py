@@ -35,8 +35,8 @@ def escape_dn_value(value: str) -> str:
 
 
 def resolve_bind_dn(username: str) -> str:
-    """Look up a user's actual DN by uid, falling back to a guessed cn=... DN."""
-    bind_dn = f"cn={escape_dn_value(username)},{LDAP_BASE_DN}"
+    """Look up a user's actual DN by uid, falling back to a guessed uid=... DN."""
+    bind_dn = f"uid={escape_dn_value(username)},{LDAP_BASE_DN}"
     try:
         admin_conn = get_admin_connection()
         admin_conn.search(
@@ -71,8 +71,27 @@ def get_ou(dn: str) -> str | None:
     return None
 
 
-def list_users(conn: Connection) -> list[dict]:
-    conn.search(LDAP_BASE_DN, "(objectClass=inetOrgPerson)", attributes=["cn", "sn", "uid"])
+def normalize_dn(dn: str) -> tuple:
+    return tuple((attribute.lower(), value.lower()) for attribute, value, separator in parse_dn(dn))
+
+
+def find_user_dn(uid: str) -> str:
+    conn = get_admin_connection()
+    conn.search(LDAP_BASE_DN, f"(uid={escape_filter_chars(uid)})", attributes=[])
+    user_dn = conn.entries[0].entry_dn if conn.entries else None
+    conn.unbind()
+    if user_dn is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_dn
+
+
+def list_users(conn: Connection, term: str | None = None, field: str | None = None) -> list[dict]:
+    if term is not None:
+        filter_string = search_users(term, field)
+    else:
+        filter_string = "(objectClass=inetOrgPerson)"
+
+    conn.search(LDAP_BASE_DN, filter_string, attributes=["cn", "sn", "uid"])
     results = []
     for entry in conn.entries:
         results.append({
@@ -84,9 +103,38 @@ def list_users(conn: Connection) -> list[dict]:
     conn.unbind()
     return results
 
+def search_users(term: str, field: str | None = None) -> str:
+    useStr = escape_filter_chars(term)
+
+    if field is None:
+        arama = f"(&(objectClass=inetOrgPerson)(|(sn=*{useStr}*)(cn=*{useStr}*)(uid=*{useStr}*)))"
+    else:
+        arama = f"(&(objectClass=inetOrgPerson)({field}=*{useStr}*))"
+   
+    return arama
+
+def one_user(conn: Connection, uid: str) -> dict:
+    conn.search(LDAP_BASE_DN, f"(uid={escape_filter_chars(uid)})", attributes=["cn", "sn", "uid", "ou"])
+    if not conn.entries:
+        conn.unbind()
+        raise HTTPException(status_code=404, detail=f"User with uid '{uid}' not found")
+    data = {
+                "cn": str(conn.entries[0].cn),
+                "sn": str(conn.entries[0].sn),
+                "uid": str(conn.entries[0].uid),
+                "ou": get_ou(str(conn.entries[0].entry_dn))
+            }
+    conn.unbind()
+    return data
+
 
 def create_user(conn: Connection, new_user: NewUser) -> dict:
-    user_dn = f"cn={escape_dn_value(new_user.cn)},ou={escape_dn_value(new_user.ou)},{LDAP_BASE_DN}"
+    conn.search(LDAP_BASE_DN, f"(uid={escape_filter_chars(new_user.uid)})", attributes=[])
+    if conn.entries:
+        conn.unbind()
+        raise HTTPException(status_code=409, detail=f"User with uid '{new_user.uid}' already exists")
+
+    user_dn = f"uid={escape_dn_value(new_user.uid)},ou={escape_dn_value(new_user.ou)},{LDAP_BASE_DN}"
     success = conn.add(
         user_dn,
         object_class=["inetOrgPerson"],
@@ -106,7 +154,7 @@ def create_user(conn: Connection, new_user: NewUser) -> dict:
 
 
 def update_user(conn: Connection, uid: str, updates: UpdateUser) -> dict:
-    conn.search(LDAP_BASE_DN, f"(uid={escape_filter_chars(uid)})", attributes=["cn"])
+    conn.search(LDAP_BASE_DN, f"(uid={escape_filter_chars(uid)})", attributes=["uid"])
     if not conn.entries:
         conn.unbind()
         raise HTTPException(status_code=404, detail=f"User with uid '{uid}' not found")
@@ -117,11 +165,21 @@ def update_user(conn: Connection, uid: str, updates: UpdateUser) -> dict:
         changes["sn"] = [(MODIFY_REPLACE, [updates.sn])]
 
     if updates.ou:
-        cn_value = escape_dn_value(str(conn.entries[0].cn))
+        uid_value = escape_dn_value(str(conn.entries[0].uid))
         new_ou = escape_dn_value(updates.ou)
-        new_dn = f"cn={cn_value},ou={new_ou},{LDAP_BASE_DN}"
-        conn.modify_dn(user_dn, f"cn={cn_value}", new_superior=f"ou={new_ou},{LDAP_BASE_DN}")
-        user_dn = new_dn
+        new_dn = f"uid={uid_value},ou={new_ou},{LDAP_BASE_DN}"
+        if normalize_dn(new_dn) != normalize_dn(user_dn):
+            moved = conn.modify_dn(
+                user_dn,
+                f"uid={uid_value}",
+                delete_old_dn=False,
+                new_superior=f"ou={new_ou},{LDAP_BASE_DN}",
+            )
+            if not moved:
+                conn.unbind()
+                print(f"LDAP modify_dn failed for {user_dn}: {conn.result}")
+                raise HTTPException(status_code=400, detail="Could not move user")
+            user_dn = new_dn
 
     if changes:
         conn.modify(user_dn, changes)

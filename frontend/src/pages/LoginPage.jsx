@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import LoginForm from '../components/LoginForm.jsx'
 import * as api from '../api.js'
 
@@ -7,6 +7,7 @@ export default function LoginPage({ onAuthenticated }) {
   const [status, setStatus] = useState('')
   const [statusClass, setStatusClass] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
 
   async function handleLogin(username, password) {
     setStatus('Giriş yapılıyor...')
@@ -14,7 +15,7 @@ export default function LoginPage({ onAuthenticated }) {
     try {
       const data = await api.login(username, password)
       onAuthenticated(data.access_token)
-      navigate('/')
+      navigate(location.state?.from || '/', { replace: true })
     } catch (e) {
       setStatus('Bağlantı hatası: ' + e.message)
       setStatusClass('error')

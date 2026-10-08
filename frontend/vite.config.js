@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       '/login': 'http://localhost:8000',
       '/users': 'http://localhost:8000',
+      '/Print_Log': 'http://localhost:8000',
     },
   },
 })

@@ -1,19 +1,10 @@
 import json
 import logging
 import time
+from log import log_request
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-
-logger = logging.getLogger("ldap_project.requests")
-logger.setLevel(logging.INFO)
-
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(message)s"))
-    logger.addHandler(handler)
-    logger.propagate = False
-
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -29,5 +20,5 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "duration_ms": duration_ms,
             "client": request.client.host if request.client else None,
         }
-        logger.info(json.dumps(log_entry))
+        log_request(log_entry)
         return response

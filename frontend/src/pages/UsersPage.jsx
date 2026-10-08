@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AddUserForm from '../components/AddUserForm.jsx'
 import UserTable from '../components/UserTable.jsx'
 import * as api from '../api.js'
 
 export default function UsersPage({ accessToken, currentUser, onLogout }) {
+  const navigate = useNavigate()
+  const isAdmin = !!currentUser?.isAdmin
   const [users, setUsers] = useState([])
   const [listStatus, setListStatus] = useState('')
   const [listStatusClass, setListStatusClass] = useState('')
   const [addStatus, setAddStatus] = useState('')
   const [addStatusClass, setAddStatusClass] = useState('')
+  const [search, setSearch] = useState('')
+  const [searchField, setSearchField] = useState('')
 
-  async function loadUsers() {
+  async function loadUsers(activeSearch = search, activeField = searchField) {
     setListStatus('Yükleniyor...')
     setListStatusClass('')
     try {
-      const data = await api.listUsers(accessToken)
+      const data = await api.listUsers(accessToken, activeSearch.trim(), activeField)
       setUsers(data.users)
       setListStatus('Bağlantı başarılı.')
       setListStatusClass('success')
@@ -28,6 +33,17 @@ export default function UsersPage({ accessToken, currentUser, onLogout }) {
     loadUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function handleSearch(e) {
+    e.preventDefault()
+    loadUsers()
+  }
+
+  function handleClearSearch() {
+    setSearch('')
+    setSearchField('')
+    loadUsers('', '')
+  }
 
   async function handleAdd(form) {
     try {
@@ -73,12 +89,30 @@ export default function UsersPage({ accessToken, currentUser, onLogout }) {
               {currentUser.isAdmin && <span className="admin-badge">Admin</span>}
             </span>
           )}
+          {isAdmin && <button onClick={() => navigate('/logs')}>Loglar</button>}
+          {isAdmin && <button onClick={() => navigate('/chat')}>Asistan</button>}
           <button onClick={onLogout}>Çıkış Yap</button>
         </div>
       </div>
       <p className={listStatusClass}>{listStatus}</p>
-      <AddUserForm onAdd={handleAdd} status={addStatus} statusClass={addStatusClass} />
-      <UserTable users={users} onUpdate={handleUpdate} onDelete={handleDelete} />
+      {isAdmin && <AddUserForm onAdd={handleAdd} status={addStatus} statusClass={addStatusClass} />}
+      <form className="box" onSubmit={handleSearch}>
+        <select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
+          <option value="">Hepsi</option>
+          <option value="cn">cn</option>
+          <option value="sn">sn</option>
+          {isAdmin && <option value="uid">uid</option>}
+        </select>
+        <input
+          type="text"
+          placeholder={isAdmin ? 'Ara (cn, sn, uid)' : 'Ara (cn, sn)'}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button type="submit">Ara</button>
+        <button type="button" onClick={handleClearSearch}>Temizle</button>
+      </form>
+      <UserTable users={users} isAdmin={isAdmin} currentUid={currentUser?.uid} onUpdate={handleUpdate} onDelete={handleDelete} />
     </>
   )
 }

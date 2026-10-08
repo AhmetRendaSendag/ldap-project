@@ -47,7 +47,7 @@ th {
   color: white;
 }
 
-input, button {
+input, button, select {
   padding: 8px;
   margin: 4px 0;
 }
@@ -65,4 +65,132 @@ input, button {
 
 .success {
   color: green;
+}
+
+.profile dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 20px;
+  margin: 0;
+}
+
+.profile dt {
+  font-weight: bold;
+  color: #555;
+}
+
+.profile dd {
+  margin: 0;
+}
+
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.qr {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin-top: 15px;
+}
+
+.qr-target {
+  font-size: 0.85em;
+  color: #666;
+  word-break: break-all;
+}
+
+.tunnel {
+  margin: 10px 0 15px;
+}
+
+.tunnel-state {
+  margin-left: 10px;
+  font-size: 0.9em;
+  word-break: break-all;
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ccc;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.chat-note {
+  margin-top: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.chat-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-message {
+  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-user {
+  align-self: flex-end;
+  background: #333;
+  color: white;
+}
+
+.chat-bot {
+  align-self: flex-start;
+  background: white;
+  border: 1px solid #ddd;
+}
+
+.chat-error {
+  align-self: flex-start;
+  color: red;
+}
+
+.chat-pending {
+  color: #888;
+  font-style: italic;
+}
+
+.chat-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chat-form input {
+  flex: 1;
 }

@@ -7,3 +7,7 @@ __pycache__
 base.ldif.local
 frontend/node_modules
 frontend/dist
+log
+test_storage.py
+docker
+.env
