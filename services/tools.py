@@ -129,6 +129,9 @@ TOOLS = [
 
 
 def run_tool(name: str, arguments: dict, actor: str) -> dict:
+    if name not in {tool["name"] for tool in TOOLS}:
+        return {"error": "Unknown tool"}
+
     try:
         if name == "get_user":
             conn = ldap_service.get_admin_connection()
