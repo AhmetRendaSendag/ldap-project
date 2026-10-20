@@ -194,3 +194,75 @@ input, button, select {
 .chat-form input {
   flex: 1;
 }
+
+.chat-layout {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.chat-layout .chat {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.chat-new {
+  width: 100%;
+  margin-top: 0;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.chat-list button {
+  display: block;
+  width: 100%;
+  margin: 0 0 4px;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-list button:hover:not(:disabled) {
+  background: #f4f4f4;
+}
+
+.chat-list button.active {
+  background: #333;
+  color: white;
+}
+
+@media (max-width: 700px) {
+  body {
+    margin: 16px;
+  }
+
+  .chat-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .chat-sidebar {
+    width: auto;
+  }
+
+  .chat-list {
+    max-height: 150px;
+  }
+}

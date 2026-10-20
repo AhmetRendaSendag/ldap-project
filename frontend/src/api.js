@@ -123,6 +123,14 @@ export function getLogs(token, filters = {}) {
   return request('/Print_Log' + (query ? '?' + query : ''), { token })
 }
 
-export function sendChat(token, message) {
-  return request('/chat', { method: 'POST', token, body: { message } })
+export function sendChat(token, message, conversationId) {
+  return request('/chat', { method: 'POST', token, body: { message, conversation_id: conversationId || null } })
+}
+
+export function listConversations(token) {
+  return request('/chat/conversations', { token })
+}
+
+export function getConversation(token, id) {
+  return request('/chat/conversations/' + encodeURIComponent(id), { token })
 }

@@ -14,7 +14,6 @@ def put_profile(uid: str, data: dict):
 
 
 def get_profile(uid: str) -> dict | None:
-    """Return the user's stored profile fields, or None if they haven't saved any."""
     return profiles.find_one({"_id": uid}, projection={"_id": False})
 
 

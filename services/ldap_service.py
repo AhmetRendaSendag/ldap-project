@@ -35,7 +35,6 @@ def escape_dn_value(value: str) -> str:
 
 
 def resolve_bind_dn(username: str) -> str:
-    """Look up a user's actual DN by uid, falling back to a guessed uid=... DN."""
     bind_dn = f"uid={escape_dn_value(username)},{LDAP_BASE_DN}"
     try:
         admin_conn = get_admin_connection()

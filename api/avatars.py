@@ -9,7 +9,6 @@ MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 
 def _detect_image_type(data: bytes) -> str | None:
-    """Identify the image format from its magic bytes instead of trusting the client's Content-Type."""
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         return "image/png"
     if data.startswith(b"\xff\xd8\xff"):

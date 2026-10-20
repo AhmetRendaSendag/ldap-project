@@ -20,6 +20,10 @@ services:
       MINIO_ENDPOINT: minio:9000
       MONGO_URL: mongodb://mongo:27017
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
     ports:
       - "8000:8000"
     depends_on:

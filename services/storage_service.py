@@ -44,7 +44,6 @@ def delete_avatar(uid: str):
 
 
 def get_avatar(uid: str) -> tuple[bytes, str] | None:
-    """Return (data, content_type) for the user's avatar, or None if they haven't uploaded one."""
     try:
         response = client.get_object(BUCKET_NAME, AVATAR_PREFIX + uid)
     except S3Error as e:
